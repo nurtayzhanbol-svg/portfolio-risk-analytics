@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: portfolio
+      POSTGRES_PASSWORD: portfolio
+      POSTGRES_DB: portfolio
+    ports: ["5432:5432"]
+    healthcheck:
+      test: pg_isready -U portfolio
+      interval: 3s
+      retries: 20
+
+  api:
+    build: .
+    environment:
+      DATABASE_URL: postgresql://portfolio:portfolio@postgres:5432/portfolio
+    command: sh -c "python -m app.load_prices data/sample_prices.csv && uvicorn app.api:app --host 0.0.0.0 --port 8000"
+    ports: ["8000:8000"]
+    depends_on:
+      postgres: { condition: service_healthy }
